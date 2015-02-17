@@ -1,1 +1,6 @@
 profilehooks
+Flask
+Flask-Script
+gunicorn
+BeautifulSoup
+soupselect
