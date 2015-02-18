@@ -1,12 +1,12 @@
 import scrapy
 
-from golden_globes_nominees.items import GoldenGlobesPresenters
+from golden_globes_project.items import GoldenGlobesNomineesItem, GoldenGlobesPresenters
 
-class PresenterSpider(scrapy.Spider):
+class DmozSpider(scrapy.Spider):
     name = "globe"
-    allowed_domains = ["harpersbazaar.com"]
+    allowed_domains = ["goldenglobes.com"]
     start_urls = [
-        "http://www.harpersbazaar.com/culture/film-tv/news/a4346/golden-globes-2015/"
+        "http://www.goldenglobes.com/2015_72nd_Golden_Globes_Nominees"
     ]
 
     def parse(self, response):
