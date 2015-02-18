@@ -15,6 +15,7 @@ filename = sys.argv[1]
 data = []
 all_presenters = []
 all_nominees = set()
+all_presenter_dict = {}
 
 def load_nominees():
 	if '13' in filename:
@@ -48,26 +49,28 @@ def load_nominees():
 
 def load_presenters(nominee_dict):
 	if '13' in filename:
-		presenter_file = 'golden_globes_project/presenters2013.json'
+		presenter_file = 'golden_globes_project/golden_globes_project/final_presenters2013.json'
 	else:
-		presenter_file = 'golden_globes_project/presenter.json'
+		presenter_file = 'golden_globes_project/golden_globes_project/final_presenters2015.json'
 	json_data=open(presenter_file)
 	presenter_data = json.load(json_data)
 	json_data.close()
 
+	all_presenter_dict = presenter_data
 	presenter_dict = {}
 
 	for element in presenter_data:
-		all_presenters.append(element['presenter'])
-
+		all_presenters = presenter_data[element]
 
 	for award in nominee_dict:
 		temp_dict = {}
 		for presenter in presenter_data:
-			temp_dict[presenter['presenter']] = 0
+			temp_dict[presenter[0]] = 0
+
 		presenter_dict[award] = temp_dict
 
-	return presenter_dict
+
+	return [presenter_dict, presenter_data, all_presenters]
 
 
 
@@ -93,10 +96,10 @@ def word_frequency(nominee_dict, presenter_dict):
 		#if int(text['timestamp_ms']) >= 1421024400000:
 		word_set = set(text['text'].split(" "))
 		for this in nominee_dict:
-			if set(this.split(" ")).issubset(word_set):
+			if set(this.split(" ")).issubset(word_set):		
 				for possible_presenter in presenter_dict[this]:
-					if possible_presenter in text['text']:
-						presenter_dict[this][possible_presenter] += 1					
+					if possible_presenter.split(" ")[0] in list(word_set):
+						presenter_dict[this][possible_presenter] += 1		
 				for possible_nominee in nominee_dict[this]:					
 					if possible_nominee in text['text']:
 						nominee_dict[this][possible_nominee] += 1
@@ -106,12 +109,10 @@ def word_frequency(nominee_dict, presenter_dict):
 
 load_tweets_json(filename)
 nominees = load_nominees()
-presenters = load_presenters(nominees)
+[presenters,all_presenter_dict,all_presenters] = load_presenters(nominees)
 freq_list = word_frequency(nominees, presenters)
 #freq_list = [nominees, presenters]
 print "\n\nResults:"
-print json.dumps(freq_list[0], indent=4, sort_keys=True)
-print json.dumps(freq_list[1], indent=4, sort_keys=True)
 
 
 final_dict = {
@@ -119,9 +120,13 @@ final_dict = {
 	"tweets": len(data[0])
 } 
 award_dict = {}
+print all_presenter_dict
+print all_presenter_dict['Best Screenplay - Motion Picture']
 for award in freq_list[0]:
+	print award
 	winner = max(freq_list[0][award].iteritems(), key=operator.itemgetter(1))[0]
-	presenters = [max(freq_list[1][award].iteritems(), key=operator.itemgetter(1))[0]]
+	print all_presenter_dict[award]
+	presenters = [all_presenter_dict[award][0], all_presenter_dict[award][1]]
 	temp_dict = {}
 	temp_dict["winner"] = winner
 	temp_dict["presenters"] = presenters
@@ -182,9 +187,10 @@ for award in final_dict['awards']:
 	award_nominees = []
 	save_index = 0
 	temp_dict['presenters'] = final_dict['awards'][award]['presenters']
-	temp_dict['winner'] = final_dict['awards'][award]['winner']
+	temp_dict['winner'] = final_dict['awards'][award]['winner'].lower()
 	for nominees_temp in nominees[award]:
-		award_nominees.append(nominees_temp)
+		if nominees_temp.lower() != temp_dict['winner']:
+			award_nominees.append(nominees_temp.lower())
 	temp_dict['nominees'] = award_nominees
 	data_dict['structured'][award] = temp_dict
 
